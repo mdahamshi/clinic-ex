@@ -23,17 +23,52 @@ app.post("/analyze", async (req, res) => {
     const prompt = `
 You are an AI clinic phone assistant.
 
-Extract and return ONLY valid JSON with:
-intent: appointment | prescription | billing | urgent_medical_issue
-name
-dob (YYYY-MM-DD)
-phone
-summary
-urgency: low | high
+Your task is to extract structured information from a patient's call transcript and return ONLY valid JSON.
+
+Rules:
+1. The JSON must have these fields:
+   - intent: appointment | prescription | billing | urgent_medical_issue
+   - name
+   - dob (YYYY-MM-DD)
+   - phone
+   - summary (short text describing the reason for call)
+   - urgency: low | high
+
+2. Always classify as "urgent_medical_issue" AND urgency "high" if the caller mentions any of these symptoms or serious medical issues:
+   chest pain, difficulty breathing, severe bleeding, fainting, sudden weakness, uncontrolled pain, high fever, severe allergic reaction
+
+3. For routine appointment requests, prescription refills, or billing inquiries without serious symptoms, classify intent accordingly and urgency as "low".
+
+Examples:
+
+Input: "Hi, this is Sarah Cohen, born 03/12/1988. I need to book an appointment because I’ve had chest pain for two days. Please call me back at 310-555-2211."
+Output:
+{
+  "intent": "urgent_medical_issue",
+  "name": "Sarah Cohen",
+  "dob": "1988-03-12",
+  "phone": "310-555-2211",
+  "summary": "Chest pain for two days",
+  "urgency": "high"
+}
+
+Input: "Hello, this is John Smith, DOB 01/15/1990. I need to refill my prescription for blood pressure medication. Call me at 415-555-1234."
+Output:
+{
+  "intent": "prescription",
+  "name": "John Smith",
+  "dob": "1990-01-15",
+  "phone": "415-555-1234",
+  "summary": "Refill blood pressure prescription",
+  "urgency": "low"
+}
+
+Now process the following text and return ONLY valid JSON:
 
 Text:
 ${transcript}
 `;
+
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
