@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  clinic-assistant:
+    build: .
+    container_name: clinic-assistant
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
